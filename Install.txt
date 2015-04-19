@@ -1,0 +1,33 @@
+
+
+Installation:
+
+1.  Download the zip from Github
+2.  Extract the files from the zip and place them into your mission file
+3.  Make edits inside etv.sqf as desired to include additional or fewer eligible building or vehicle classes, or also to remove possible explosive types (see script code comments for where this applies)
+4.  In your init.sqf add the following lines:
+
+//Attach Explosives
+if (!isDedicated and hasInterface) then 
+{
+	while {true} do
+	{
+		waitUntil {alive vehicle player};
+		Sleep 30;
+		[] execVM "addons\etv\EtV.sqf";
+		waitUntil {!isNil "EtVInitialized"};
+		[player] call EtV_Actions;
+				
+		waitUntil {!alive player};
+		Sleep 30;
+		[] execVM "addons\etv\EtV.sqf";
+		waitUntil {!isNil "EtVInitialized"};
+		[player] call EtV_Actions;	
+		
+		
+	};
+};
+
+NOTE:  If you already have an 'if (!isDedicated and hasInterface)' line in your init.sqf, simply add the 'while {true} do' block inside it.
+
+5.  Add BE filters according to the instructions included with the zip download

@@ -1,6 +1,7 @@
 /*
 	Stealthstick's "Explosive-To-Vehicle" Script
 	-Allows players to attach their explosive charges to any vehicle.
+	-Edited by second_coming and Darth Rogue to work with Epoch
 */
 
 systemChat "EtV is loading...";
