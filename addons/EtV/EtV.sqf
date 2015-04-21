@@ -1,19 +1,20 @@
 /*
-	Stealthstick's "Explosive-To-Vehicle" Script
-	-Allows players to attach their explosive charges to any vehicle.
-	-Edited by second_coming and Darth Rogue to work with Epoch
+	Stealthstick's "Explosive-To-Vehicle" Script adapted by second_coming and DarthRogue to
+	Allow players to attach their explosive charges to any vehicle or lockable Epoch door.
+
 */
 
-systemChat "EtV is loading...";
+
 
 EtV_ChargeCheck =
 {
+	
 	_charge = _this select 0;
 	_unit = _this select 1;
 	_hasIt = _charge in (magazines _unit);
-	_nearVehs = nearestObjects [_unit,["Air","Ship","LandVehicle","CinderWallGarage_EPOCH","WoodLargeWallDoorL_EPOCH","WoodLargeWallDoor_EPOCH"],5];  //add or remove classnames here to determine what explosives will stick to
-	
-	_return = (_hasIt && count _nearVehs > 0 && alive _unit);
+	_nearVehs = nearestObjects [_unit,["Air","Ship","LandVehicle","CinderWallGarage_EPOCH","WoodLargeWallDoorL_EPOCH","WoodLargeWallDoor_EPOCH"],5];
+
+	_return = (_hasIt && count _nearVehs > 0 && alive _unit  && !inSafeZone);
 	_return
 };
 
@@ -23,13 +24,18 @@ EtV_TouchOff =
 	_unit = _array select 0;
 	_explosives = _unit getVariable ["charges",[]];
 	{
-		if(alive _x) then
+		if(alive _x && !inSafeZone) then
 		{
+			_nearVehicle = (nearestObjects [_x,["Air","Ship","LandVehicle","CinderWallGarage_EPOCH","WoodLargeWallDoorL_EPOCH","WoodLargeWallDoor_EPOCH"],5]) select 0;
 			"HelicopterExploSmall" createVehicle (position _x);
 			deleteVehicle _x;
+			_existingDamage = damage _nearVehicle;
+			_nearVehicle setDamage _existingDamage + 0.34;
+
 		};
 	} forEach _explosives;
 	_unit setVariable ["charges",[]];
+	
 };
 
 EtV_UnitCheck =
@@ -53,7 +59,10 @@ EtV_TimedCharge =
 {
 	_explosive = _this select 0;
 	_unit = _this select 1;
-	_illogic = group server createUnit ["logic", Position _explosive, [], 0, "FORM"];
+	//_illogic = group server createUnit ["logic", Position _explosive, [], 0, "FORM"];
+	_grp = createGroup east;
+	_illogic = _grp createUnit ["logic", Position _explosive, [], 0, "FORM"];
+	[_illogic] join _grp;
 	_illogic attachTo [_explosive];
 	while {alive _explosive} do
 	{
@@ -87,13 +96,13 @@ EtV_AttachCharge =
 		{
 			_class = "DemoCharge_Remote_Ammo";
 		};
-		case "SatchelCharge_Remote_Mag":					//add or remove either "case" to limit the type of explosives that can be used
-		{
-			_class = "SatchelCharge_Remote_Ammo";
-		};
+
+
+
+
 	};
 	
-	_nearVehicle = (nearestObjects [_unit,["Air","Ship","LandVehicle","CinderWallGarage_EPOCH","WoodLargeWallDoorL_EPOCH","WoodLargeWallDoor_EPOCH"],5]) select 0;  //add or remove classnames here to determine what explosives will stick to
+	_nearVehicle = (nearestObjects [_unit,["Air","Ship","LandVehicle","CinderWallGarage_EPOCH","WoodLargeWallDoorL_EPOCH","WoodLargeWallDoor_EPOCH"],5]) select 0;
 	_explosive = _class createVehicle [0,0,0];
 	_explosive attachTo [_unit,[0,0,0],"leftHand"];
 	_random0 = random 180;
@@ -108,7 +117,16 @@ EtV_AttachCharge =
 		_random1 = _this select 4;
 		
 		sleep 1.5;
-		_explosive attachTo [_nearVehicle, [0,0,0.2]];
+		
+		if ((typeOf _nearVehicle) in ["CinderWallGarage_EPOCH","WoodLargeWallDoorL_EPOCH","WoodLargeWallDoor_EPOCH"]) then
+		{
+			_explosive attachTo [_nearVehicle, [0,0,0.6]];
+		}
+		else
+		{
+			_explosive attachTo [_nearVehicle, [0,0,0.2]];
+		};  
+		
 		[_explosive,_random0,_random1] call BIS_fnc_SetPitchBank;
 		_unit setVariable ["charges",(_unit getVariable ["charges",[]]) + [_explosive]];
 		[_explosive,_unit] spawn EtV_TimedCharge;
@@ -158,10 +176,13 @@ EtV_Actions =
 {
 	private ["_unit"];
 	_unit = _this select 0;
-	_unit addAction ["<t color=""#FFE496"">" +"Attach Satchel Charge", EtV_AttachCharge, ["SatchelCharge_Remote_Mag",_unit], 1, true, true, "","['SatchelCharge_Remote_Mag',_target] call EtV_ChargeCheck"];  //if you eliminate one of the charge types above, you also have to eliminate it here
+
 	_unit addAction ["<t color=""#FFE496"">" +"Attach Explosive Charge", EtV_AttachCharge, ["DemoCharge_Remote_Mag",_unit], 1, true, true, "","['DemoCharge_Remote_Mag',_target] call EtV_ChargeCheck"];
-	_unit addAction ["<t color=""#FFE496"">" +"Touch-Off Explosives", EtV_TouchOff, [_unit], 1, true, true, "","[_target] call EtV_UnitCheck"];
-	_unit addAction ["<t color=""#FFE496"">" +"+30Secs to Timer", EtV_Timer, [_unit], 1, true, true, "","[_target] call EtV_UnitCheckTimer"];
+	_unit addAction ["<t color=""#CC3300"">" +"Touch-Off Explosives", EtV_TouchOff, [_unit], 1, true, true, "","[_target] call EtV_UnitCheck"];
+	_unit addAction ["<t color=""#CC3300"">" +"+30Secs to Timer", EtV_Timer, [_unit], 1, true, true, "","[_target] call EtV_UnitCheckTimer"];
 };
+
 //=======================
-EtVInitialized = true;
+
+
+[player] call EtV_Actions;
