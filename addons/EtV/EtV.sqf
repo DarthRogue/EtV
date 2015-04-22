@@ -60,7 +60,7 @@ EtV_TimedCharge =
 	_explosive = _this select 0;
 	_unit = _this select 1;
 	//_illogic = group server createUnit ["logic", Position _explosive, [], 0, "FORM"];
-	_grp = createGroup east;
+	_grp = createGroup sidelogic;
 	_illogic = _grp createUnit ["logic", Position _explosive, [], 0, "FORM"];
 	[_illogic] join _grp;
 	_illogic attachTo [_explosive];
