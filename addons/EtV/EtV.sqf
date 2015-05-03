@@ -31,7 +31,11 @@ EtV_TouchOff =
 			deleteVehicle _x;
 			_existingDamage = damage _nearVehicle;
 			_nearVehicle setDamage _existingDamage + 0.34;
-
+			_destroyed = damage _nearvehicle > 0.99;
+			if (_destroyed) then 
+				{
+					_nearVehicle call EPOCH_save_killedBuilding;
+				};
 		};
 	} forEach _explosives;
 	_unit setVariable ["charges",[]];
